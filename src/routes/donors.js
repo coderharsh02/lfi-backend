@@ -3,29 +3,34 @@ const mongoose = require("mongoose");
 const router = express.Router();
 
 const Donor = require("../models/donor");
+const Donation = require("../models/donation");
 
 router.get("/", (req, res, next) => {
   Donor.find()
-    // .select('_id name email type address phoneNumber') // password is not the thing that we share
     .exec()
-    .then((docs) => {
-      res.status(200).json({
-        handles: "GET requests to /donors",
-        count: docs.length,
-        donors: docs.map((doc) => {
-          return {
-            ...doc._doc,
-            request: {
-              type: "GET",
-              url: `${process.env.HOST_URL}/donors/${doc._id}`,
-            },
-          };
-        }),
-      });
+    .then(async (donors) => {
+      res.status(200).json(
+        await Promise.all(
+          donors.map(async (donor) => {
+            await Donation.find({ donor: donor._id })
+              .exec()
+              .then((donations) => {
+                donor = {
+                  ...donor._doc,
+                  donations,
+                  request: {
+                    type: "GET",
+                    url: `${process.env.HOST_URL}/donations/${donor._id}`,
+                  },
+                };
+              });
+            return donor;
+          })
+        )
+      );
     })
     .catch((err) => {
-      res.status(200).json({
-        handles: "GET requests to /donors",
+      res.status(500).json({
         error: err,
       });
     });
@@ -63,9 +68,8 @@ router.post("/", (req, res, next) => {
   donor
     .save()
     .then((result) => {
-      console.log(result);
+      // console.log(result);
       res.status(201).json({
-        handles: "POST requests to /donors",
         message: "Donor created successfully!",
         donorDetails: {
           ...result._doc,
@@ -79,7 +83,6 @@ router.post("/", (req, res, next) => {
     .catch((err) => {
       console.log(err);
       res.status(500).json({
-        handles: "POST requests to /donors",
         error: err,
       });
     });
@@ -90,27 +93,31 @@ router.get("/:donorId", (req, res, next) => {
 
   Donor.findById(id)
     .exec()
-    .then((doc) => {
-      // doc can be null if no such object exists
-      console.log(doc);
-
-      if (doc) {
-        res.status(200).json({
-          handles: "GET requests to /donors/{id}",
-          id,
-          donorDetails: doc,
-        });
+    .then(async (donor) => {
+      // donor can be null if no such object exists
+      if (donor) {
+        await Donation.find({ donorId: donor._id })
+          .exec()
+          .then((donations) => {
+            donor = {
+              ...donor._doc,
+              donations,
+              request: {
+                type: "GET",
+                url: `${process.env.HOST_URL}/donations/${donor._id}`,
+              },
+            };
+          });
+        res.status(200).json(donor);
       } else {
         res.status(404).json({
-          handles: "GET requests to /donors/{id}",
-          donorDetails: "No such donor exists",
+          message: "No such donor exists",
         });
       }
     })
     .catch((err) => {
       console.log(err);
       res.status(500).json({
-        handles: "GET requests to /donors/{id}",
         error: err,
       });
     });
@@ -138,7 +145,7 @@ request body
 router.patch("/:donorId", (req, res, next) => {
   const id = req.params.donorId;
 
-  console.log(req.body);
+  // console.log(req.body);
   const updateOps = {};
   for (const ops of req.body) {
     updateOps[ops.propName] = ops.value;
@@ -147,7 +154,7 @@ router.patch("/:donorId", (req, res, next) => {
   Donor.updateOne({ _id: id }, { $set: updateOps })
     .exec()
     .then((result) => {
-      console.log(result);
+      // console.log(result);
       res.status(200).json({
         message: `Donor ${id} Updated Successfully`,
         request: {
@@ -171,16 +178,12 @@ router.delete("/:donorId", (req, res, next) => {
     .exec()
     .then((result) => {
       res.status(200).json({
-        handles: "DELETE requests to /donors/{id} (Delete)",
         message: "donor removed successfully",
-        id,
-        result,
       });
     })
-    .catch((error) => {
+    .catch((err) => {
       res.status(500).json({
-        handles: "DELETE requests to /donors/{id} (Delete)",
-        error,
+        error: err,
       });
     });
 });

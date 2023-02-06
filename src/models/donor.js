@@ -8,7 +8,6 @@
 // Area (City)
 
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
 
 const donorSchema = new mongoose.Schema({
   _id: mongoose.Schema.Types.ObjectId,
@@ -31,7 +30,7 @@ const donorSchema = new mongoose.Schema({
 
   type: {
     type: String,
-    required: true,
+    default: 'Individual'
   },
 
   addressLine1: { type: String },

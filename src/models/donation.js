@@ -1,59 +1,39 @@
-// Type
-// Name
-// Email/UserName (index)
-// Password
-// Phone Number
-// Address
-// pin code
-// Area (City)
-
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
 
-const donorSchema = new mongoose.Schema({
-  _id: mongoose.Schema.Types.ObjectId,
+const donationSchema = new mongoose.Schema(
+  {
+    _id: mongoose.Schema.Types.ObjectId,
 
-  name: {
-    type: String,
-    required: true,
+    donor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Donor",
+      required: true,
+    },
+
+    noOfMeals: {
+      type: Number,
+      required: true,
+    },
+
+    pickUpTimeFrom: {
+      type: String,
+      required: true,
+    },
+
+    pickUpTimeTill: {
+      type: String,
+      required: true,
+    },
+
+    status: {
+      type: String,
+      required: true,
+      enum: ["available", "pickedUp"],
+    },
   },
-
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-
-  password: {
-    type: String,
-    required: true,
-  },
-
-  type: {
-    type: String,
-    required: true,
-  },
-
-  addressLine1: { type: String },
-
-  addressLine2: { type: String },
-
-  city: {
-    type: String,
-    required: true,
-  },
-
-  pincode: {
-    type: String,
-    required: true,
-  },
-
-  phoneNumber: {
-    type: String,
-    required: true,
-  },
-});
+  { timestamps: true }
+);
 
 mongoose.set("strictQuery", true);
 
-module.exports = mongoose.model("Donor", donorSchema);
+module.exports = mongoose.model("Donation", donationSchema);
