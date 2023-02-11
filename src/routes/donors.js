@@ -20,7 +20,7 @@ router.get("/", (req, res, next) => {
                   donations,
                   request: {
                     type: "GET",
-                    url: `${process.env.HOST_URL}/donations/${donor._id}`,
+                    url: `${process.env.HOST_URL}/donors/${donor._id}`,
                   },
                 };
               });
@@ -96,7 +96,8 @@ router.get("/:donorId", (req, res, next) => {
     .then(async (donor) => {
       // donor can be null if no such object exists
       if (donor) {
-        await Donation.find({ donorId: donor._id })
+
+        await Donation.find({ donor: donor._id })
           .exec()
           .then((donations) => {
             donor = {
